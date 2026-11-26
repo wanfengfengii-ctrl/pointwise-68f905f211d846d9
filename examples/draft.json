@@ -1,0 +1,21 @@
+{
+  "draft": "bridge",
+  "voices": [
+    {
+      "voice": "soprano",
+      "notes": [
+        {"beat": 1, "lyric": "风"},
+        {"beat": "3/2", "lyric": "过"},
+        {"beat": 2, "lyric": "长"},
+        {"beat": 3, "lyric": "桥"}
+      ]
+    },
+    {
+      "voice": "alto",
+      "notes": [
+        {"beat": 1, "lyric": "河"},
+        {"beat": 2, "lyric": "岸"}
+      ]
+    }
+  ]
+}

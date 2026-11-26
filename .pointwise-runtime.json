@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "kind": "api",
+  "setup": [],
+  "start": ["python3", "-B", "-m", "examples.desk_fixture", "start", "--host", "${POINTWISE_HOST}", "--port", "${POINTWISE_PORT}"],
+  "readiness_path": "/ready",
+  "verify": ["python3", "-B", "-m", "examples.desk_fixture", "verify"],
+  "demo": ["python3", "-B", "-m", "examples.desk_fixture", "demo"]
+}
