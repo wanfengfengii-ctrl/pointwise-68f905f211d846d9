@@ -4,12 +4,15 @@ import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from rehearsal.errors import ConflictError
+from rehearsal.errors import Accepted, ConflictError, UpstreamError
 from rehearsal.service import RehearsalService
 
 
 _POST_ROUTES = {'/load': 'load', '/edit': 'edit', '/issue': 'issue', '/mark': 'mark',
-                '/handout': 'handout', '/close': 'close'}
+                '/handout': 'handout', '/close': 'close', '/desk/open': 'desk_open',
+                '/desk/stage': 'desk_stage', '/desk/switch': 'desk_switch',
+                '/desk/hold': 'desk_hold', '/desk/release': 'desk_release'}
+_GET_ROUTES = {'/read': 'read', '/desk/current': 'desk_current'}
 _MAX_BODY_BYTES = 1_048_576
 
 
@@ -62,9 +65,10 @@ class RehearsalRequestHandler(BaseHTTPRequestHandler):
         try:
             url = urlsplit(self.path)
             if method == 'GET':
-                if url.path != '/read':
+                route = _GET_ROUTES.get(url.path)
+                if route is None:
                     raise KeyError('unknown_route')
-                result = self.server.service.read(self._read_query(url.query))
+                result = getattr(self.server.service, route)(self._read_query(url.query))
             else:
                 route = _POST_ROUTES.get(url.path)
                 if route is None:
@@ -73,12 +77,16 @@ class RehearsalRequestHandler(BaseHTTPRequestHandler):
                     raise ValueError('unexpected_query')
                 handler = getattr(self.server.service, route)
                 result = handler(self._body())
+        except Accepted as accepted:
+            self._send(202, accepted.body)
         except ValueError as error:
             self._send(400, {'error': str(error)})
         except KeyError as error:
             self._send(404, {'error': error.args[0]})
         except ConflictError as error:
             self._send(409, {'error': str(error)})
+        except UpstreamError as error:
+            self._send(502, {'error': str(error)})
         except sqlite3.Error:
             self._send(500, {'error': 'storage_failure'})
         else:

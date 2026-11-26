@@ -9,6 +9,10 @@ from score.notes import NoteEvent
 class VoiceSheet:
     voice: str
     phrases: tuple[PhraseLine, ...]
+    cues: tuple | None = None
+
+    def bound_cues(self):
+        return {} if self.cues is None else {cue: dict(binding) for cue, binding in self.cues}
 
 
 def build_voice_sheet(voice, phrases, placements):
@@ -26,7 +30,7 @@ def find_phrase_on_sheet(sheet, phrase):
 
 
 def voice_sheet_to_record(sheet):
-    return {
+    record = {
         'voice': sheet.voice,
         'phrases': [
             {
@@ -40,6 +44,9 @@ def voice_sheet_to_record(sheet):
             for line in sheet.phrases
         ],
     }
+    if sheet.cues is not None:
+        record['cues'] = sheet.bound_cues()
+    return record
 
 
 def voice_sheet_from_record(record):
@@ -48,4 +55,7 @@ def voice_sheet_from_record(record):
         notes = tuple(NoteEvent(note['number'], parse_beat(note['beat']), note['lyric']) for note in line['notes'])
         marks = tuple(PrintedMark(**mark) for mark in line['marks'])
         phrases.append(PhraseLine(line['phrase'], notes, marks))
-    return VoiceSheet(record['voice'], tuple(phrases))
+    cues = record.get('cues')
+    if cues is not None:
+        cues = tuple(sorted((cue, dict(binding)) for cue, binding in cues.items()))
+    return VoiceSheet(record['voice'], tuple(phrases), cues)

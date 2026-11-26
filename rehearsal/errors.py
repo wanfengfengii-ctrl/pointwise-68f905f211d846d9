@@ -5,6 +5,18 @@ class ConflictError(Exception):
     pass
 
 
+class Accepted(Exception):
+    """The request is recorded but its outcome is not yet decided (HTTP 202)."""
+
+    def __init__(self, body):
+        super().__init__('request_pending')
+        self.body = body
+
+
+class UpstreamError(Exception):
+    """A required upstream service (publisher or peer desk) is unreachable."""
+
+
 def require_fields(data, required, optional=()):
     required = set(required)
     if not isinstance(data, dict):
